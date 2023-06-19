@@ -10,8 +10,13 @@ import {
     decryptArrayValues,
     getCardsNfts
 } from '../utils/interact';
+import { useRouter } from 'next/navigation';
+
 
 const NFTPage = () => {
+    const router = useRouter();
+
+
     const [activeTab, setActiveTab] = useState('tab1');
     const [nftsTab1, setNFTsTab1] = useState([]);
     const [nftsTab2, setNFTsTab2] = useState([]);
@@ -56,6 +61,10 @@ const NFTPage = () => {
     const fetchData =  async () => {
         // setLoading(true);
         const { success, status, address } = await getCurrentWalletConnected();
+        if(!success){
+            router.push('/');
+            return;
+        }
         setWalletAddress(address);
         // setLoading(false);
     };
@@ -185,7 +194,7 @@ const NFTPage = () => {
           }`}
           onClick={() => handleTabChange('tab2')}
         >
-          Crads
+          Cards
         </button>
       </div>
       {activeTab === 'tab1' ? (

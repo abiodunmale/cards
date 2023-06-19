@@ -53,6 +53,7 @@ export default function Home() {
 
   const connectWalletPressed = async () => {
     const {address, status, success} = await connectWallet();
+    if(!success) toast.error(status);
     setWalletAddress(address);
   }
 
