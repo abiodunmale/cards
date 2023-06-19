@@ -3,6 +3,8 @@ import toast, { Toaster } from 'react-hot-toast';
 import Head from 'next/head'
 import Image from 'next/image'
 import Link from 'next/link';
+import { createHmac } from 'crypto';
+
 import {
   connectWallet,
   getCurrentWalletConnected,
@@ -10,8 +12,14 @@ import {
   getPackSupply,
   mintSingle,
   mintMutiple,
-  getMintState
+  getMintState,
+  mintAvailableTokensForUser,
+  mintWhitelist,
+  decryptArrayValues,
+  encryptArrayValues
 } from '../utils/interact';
+
+const SECRET_KEY = 'YOUR_SECRET_KEY';
 
 
 export default function Home() {
@@ -73,7 +81,7 @@ export default function Home() {
   };
 
   const packSelected = (id) => {
-    console.log("id", id);
+    // console.log("id", mintOption.ids.indexOf(id));
     if(!walletAddress) return;
     if(mintOption.ids.includes(id)){
       let indexItem = mintOption.ids.indexOf(id);
@@ -95,8 +103,8 @@ export default function Home() {
   };  
 
   const mintBtnPressed = async () => {
-    console.log("mintOption");
-    console.log(mintOption);
+    // console.log("mintOption");
+    // console.log(mintOption);
     if(mintOption.ids.length == 0){
       toast.error("click on cards to select pack to mint");
       return;
@@ -135,6 +143,40 @@ export default function Home() {
 
   const getTotalQty = () => mintOption.quantity.reduce((a, b) => a + b, 0);
 
+  const handleGenerateMintIds = async () => {
+
+    // await new Promise(resolve => setTimeout(resolve, 3000));
+
+    const response = await fetch(`/api/reveal?qty=3`);
+    if (response.ok) {
+      const data = await response.json();
+      // console.log("data", data);
+
+      const decrypted = decryptArrayValues(data.hash);
+      // console.log("Decrypted number:", decrypted);
+
+      await new Promise(resolve => setTimeout(resolve, 7000));
+
+      const responsePost = await fetch('/api/reveal', {
+          method: 'POST',
+          body: JSON.stringify({
+              ids: decrypted.tokenids,
+              qtys: decrypted.qtys
+          }),
+          headers: {
+            'Content-type': 'application/json; charset=UTF-8'
+        },
+      });
+
+      const dataPost = await responsePost.json()
+
+      // console.log(dataPost)
+
+    } else {
+      console.error('Failed to generate mint IDs');
+    }
+  };
+
   return (
     <div className="items-center justify-center w-full h-screen">
       <Head>
@@ -144,7 +186,23 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-     
+
+      <header className="bg-gray-800 text-white py-4 px-8">
+        <nav>
+          <ul className="flex space-x-4 float-right">
+            <li>
+              <Link href="/" className="hover:text-gray-300">
+                Home
+              </Link>
+            </li>
+            <li>
+              <Link href="/nft" className="hover:text-gray-300">
+                NFTs
+              </Link>
+            </li>
+          </ul>
+        </nav>
+      </header>
 
       <main className='flex flex-col w-full h-screen'>
 
@@ -242,6 +300,9 @@ export default function Home() {
                       {""}  {getTotalQty()} @ {parseFloat(getTotalQty() * Number(mintCost)).toFixed(5)}Ξ
                     </> }
                   </button>
+
+                {/* <button onClick={() => handleGenerateMintIds()}  className="mt-5 border-solid border-2 border-gray-700 font-semibold rounded-lg p-2 px-4 text-white">Doings</button> */}
+
                 </>
               :
                 <button onClick={connectWalletPressed}  className="mt-5 border-solid border-2 border-gray-700 font-semibold rounded-lg p-2 px-4 text-white">Connect Wallet</button>
